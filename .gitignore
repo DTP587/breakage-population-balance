@@ -1,6 +1,8 @@
 # Compiled source #
 ###################
 build
+__pycache__
+*.pyc
 *.c
 *.com
 *.class

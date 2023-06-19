@@ -17,7 +17,7 @@ ctypedef np.float64_t DTYPE_FLOAT_t
 # For use with scipy's ODEINT
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def breakage_ode(
+def simple_breakage(
     np.ndarray[DTYPE_FLOAT_t, ndim=1] N,
     DTYPE_FLOAT_t t,
     np.ndarray[DTYPE_FLOAT_t, ndim=1] x,
