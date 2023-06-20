@@ -3,55 +3,43 @@ from warnings import warn
 import os
 from importlib import util
 
-module_name = "breakageODE"
+# =============================================================================
 
-module_path = os.path.join(
-        os.path.dirname(__file__),
-        f"{module_name}.*.so"
-    )
-
-module_file = glob(module_path)
-
-if module_file:
-    # Import the module
-    module_spec = util.spec_from_file_location(
-        module_name, module_file[0]
-    )
-    breakageODE = util.module_from_spec(module_spec)
-    module_spec.loader.exec_module(breakageODE)
-else:
-    warn(f"Module {module_name} not found. Trying to find elsewhere...")
-
-    module_path = os.path.join(
-        os.path.dirname(__file__), "..", "build", "lib*", "breakage*",
-        f"{module_name}.*.so"
-    )
-
-    module_file = glob(module_path)
-
-    if module_file:
-        # Import the module
-        module_spec = util.spec_from_file_location(
-            module_name, module_file[0]
-        )
-        breakageODE = util.module_from_spec(module_spec)
-        module_spec.loader.exec_module(breakageODE)
+def import_cython(MODULE_NAME, module_dirs):
+    if not module_dirs:
+        pass
     else:
-        raise ValueError(f"Module {module_name} not found.")
+        for module_dir in module_dirs:
+            if not module_dir:
+                continue
+            # Import the module
+            module_spec = util.spec_from_file_location(
+                MODULE_NAME, module_dir[0]
+            )
+            module = util.module_from_spec(module_spec)
+            module_spec.loader.exec_module(module)
+            return module
+
+    raise ValueError(f"Module {MODULE_NAME} not found.")
+
+MODULE_NAME = "breakageODE"
+
+module_dirs = [
+    glob(path) for path in [
+        os.path.join(os.path.dirname(__file__), f"{MODULE_NAME}.*.so"),
+        os.path.join(
+            os.path.dirname(__file__), "..", "build", "lib*", "breakage*",
+            f"{MODULE_NAME}.*.so"
+        )
+    ]
+]
+
+breakageODE = import_cython(MODULE_NAME, module_dirs)
 
 import numpy as np
 from scipy.integrate import odeint
 
 # =============================================================================
-
-# def import_cython(module_dir, raise_error=False):
-#     # Import the module
-#     module_spec = util.spec_from_file_location(
-#         module_name, module_file[0]
-#     )
-#     module = util.module_from_spec(module_spec)
-#     module_spec.loader.exec_module(module)
-#     return module
 
 
 def check_ndarray(*args, **kwargs):
