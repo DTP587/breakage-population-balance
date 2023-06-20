@@ -1,6 +1,7 @@
 # Compiled source #
 ###################
 build
+my_venv
 __pycache__
 *.pyc
 *.c

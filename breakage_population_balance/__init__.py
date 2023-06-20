@@ -1,30 +1,58 @@
 from glob import glob
+from warnings import warn
 import os
-import importlib
+from importlib import util
 
 module_name = "breakageODE"
-suffix = ".so"
 
-module_file = glob(
-    os.path.join(
-        os.path.dirname(__file__), f"{module_name}.*{suffix}"
+module_path = os.path.join(
+        os.path.dirname(__file__),
+        f"{module_name}.*.so"
     )
-)[0]
+
+module_file = glob(module_path)
 
 if module_file:
     # Import the module
-    module_spec = importlib.util.spec_from_file_location(
-        module_name, module_file
+    module_spec = util.spec_from_file_location(
+        module_name, module_file[0]
     )
-    breakageODE = importlib.util.module_from_spec(module_spec)
+    breakageODE = util.module_from_spec(module_spec)
     module_spec.loader.exec_module(breakageODE)
 else:
-    raise ValueError(f"Module {module_name} not found.")
+    warn(f"Module {module_name} not found. Trying to find elsewhere...")
+
+    module_path = os.path.join(
+        os.path.dirname(__file__), "..", "build", "lib*", "breakage*",
+        f"{module_name}.*.so"
+    )
+
+    module_file = glob(module_path)
+
+    if module_file:
+        # Import the module
+        module_spec = util.spec_from_file_location(
+            module_name, module_file[0]
+        )
+        breakageODE = util.module_from_spec(module_spec)
+        module_spec.loader.exec_module(breakageODE)
+    else:
+        raise ValueError(f"Module {module_name} not found.")
 
 import numpy as np
 from scipy.integrate import odeint
 
 # =============================================================================
+
+# def import_cython(module_dir, raise_error=False):
+#     # Import the module
+#     module_spec = util.spec_from_file_location(
+#         module_name, module_file[0]
+#     )
+#     module = util.module_from_spec(module_spec)
+#     module_spec.loader.exec_module(module)
+#     return module
+
 
 def check_ndarray(*args, **kwargs):
     if not isinstance(args[1], np.ndarray):
