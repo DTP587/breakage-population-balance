@@ -26,7 +26,7 @@ def simple_breakage_fraction(
     np.ndarray[DTYPE_FLOAT_t, ndim=2] kernel
 ):
     
-    cdef int bins = N.shape[0]
+    cdef int bins = F.shape[0]
 
     cdef int i
     cdef int j

@@ -85,19 +85,40 @@ def wrapper_check_ndarray(func):
 
 # Currently only supports 1 Dimension in internal geometry.
 class breakageModel():
-    def __init__(self, initial_condition, times, grid, kernel, rate):
+    def __init__(
+        self, initial_condition, times, grid, rate, kernel=None, beta=None
+    ):
         self._IC  = self.__set_ICs(initial_condition)
-        self._t   = self.__set_times(times)
-        self._x   = self.__set_grid(grid)
-        self._Phi = self.__set_kernel(kernel)
+        self.t   = self.__set_times(times)
+        self.x   = self.__set_grid(grid)
         self._k   = self.__set_rate(rate)
+
+        assert kernel != beta, "kernel and beta cannot be the same or None."
+
+        if kernel is None:
+            self._Beta = self.__set_beta(beta)
+        elif beta is None:
+            self._Phi  = self.__set_kernel(kernel)
     
-    def solve(self):
+    def solve_fraction(self):
+        assert self._Phi is not None, \
+            "kernel is undefined (did you mean solve_number?)."
         # Solve the problem
         return odeint(
-            breakageODE.simple_breakage_fraction, self._IC, self._t,
+            breakageODE.simple_breakage_fraction, self._IC, self.t,
             args=(
-                self._x, self._k, self._Phi
+                self.x, self._k, self._Phi
+            )
+        )
+
+    def solve_number(self):
+        assert self._Beta is not None, \
+            "beta is undefined (did you mean solve_fraction?)."
+        # Solve the problem
+        return odeint(
+            breakageODE.simple_breakage_number, self._IC, self.t,
+            args=(
+                self.x, self._k, self._Beta
             )
         )
 
@@ -138,28 +159,40 @@ class breakageModel():
      
     def __set_kernel(self, kernel):
         if callable(kernel):
-            assert self.dims < 2, "Cannot calc kernals with > 2 dims."
+            assert self.dims < 2, "Cannot calc kernels with > 2 dims."
             # Calculate phi
             Phi = np.zeros([self.bins, self.bins])
             for i in range(self.bins):
                 for j in range(self.bins):
-                    Phi[i, j] = kernel(self._x[i], self._x[j])
+                    Phi[i, j] = kernel(self.x[i], self.x[j])
                 # Normalise array to avoid mass gain/loss
                 row = Phi[i, :]
                 row_total = np.sum(row)
                 if row_total == 0:
                      continue
                 for j in range(self.bins):
-                    Phi[i, j] = Phi[i, j]/row_total 
+                    Phi[i, j] /= row_total 
             return Phi
         check_ndarray(kernel)
         return kernel
 
+    def __set_beta(self, beta):
+        if callable(beta):
+            assert self.dims < 2, "Cannot calc beta with > 2 dims."
+            # Calculate phi
+            Beta = np.zeros([self.bins, self.bins])
+            for i in range(self.bins):
+                for j in range(self.bins):
+                    Beta[i, j] = beta(self.x[i], self.x[j])
+            return Beta
+        check_ndarray(Beta)
+        return Beta
+
     def __set_rate(self, rate):
         #Cannot support > 1D
+        assert self.dims < 2, "Cannot calculate rates with > 2 dims."
         if callable(rate):
             assert self.dims < 2, "Cannot calc rates with > 2 dims."
-            return rate(self._x)
+            return rate(self.x)
         check_ndarray(rate)
-        # correct_flat_ndarray(rate)
         return rate

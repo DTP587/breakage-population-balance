@@ -11,3 +11,5 @@ breakage_population_balance.egg-info/not-zip-safe
 breakage_population_balance.egg-info/requires.txt
 breakage_population_balance.egg-info/top_level.txt
 test/test.py
+test/test_fraction.py
+test/test_number.py
