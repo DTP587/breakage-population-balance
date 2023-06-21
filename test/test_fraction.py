@@ -30,3 +30,4 @@ solution = model.solve_fraction()
 # =============================================================================
 
 plot_against_analytical(solution, model, plot_as="fraction")
+# plot_against_analytical(solution/x, model, plot_as="number")

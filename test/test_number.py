@@ -28,3 +28,4 @@ solution = model.solve_number()
 # =============================================================================
 
 plot_against_analytical(solution, model, plot_as="number")
+# plot_against_analytical(solution*x, model, plot_as="fraction")
