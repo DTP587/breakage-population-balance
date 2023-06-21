@@ -95,7 +95,7 @@ class breakageModel():
     def solve(self):
         # Solve the problem
         return odeint(
-            breakageODE.simple_breakage, self._IC, self._t,
+            breakageODE.simple_breakage_fraction, self._IC, self._t,
             args=(
                 self._x, self._k, self._Phi
             )
