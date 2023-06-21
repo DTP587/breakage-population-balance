@@ -89,8 +89,8 @@ class breakageModel():
     @wrapper_check_ndarray 
     def __set_grid(self, grid):
         # Cannot support > 1D
-        assert len(grid.shape) <2
-        assert (grid.shape[0] == self._bins)
+        assert len(grid.shape) < 2
+        assert grid.shape[0] == self._bins
         return grid
      
     def __set_kernel(self, kernel):
