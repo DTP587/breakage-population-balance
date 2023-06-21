@@ -3,7 +3,8 @@ cimport numpy as np
 import cython
 
 # npconfig is required to disable depreciated API warning.
-# see: https://stackoverflow.com/questions/25789055/cython-numpy-warning-about-npy-no-deprecated-api-when-using-memoryview
+# see: <https://stackoverflow.com/questions/25789055/cython-numpy-warning-about
+#       -npy-no-deprecated-api-when-using-memoryview>
 cimport npconfig
 
 np.import_array()

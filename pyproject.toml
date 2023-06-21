@@ -8,7 +8,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "breakage_population_balance"
-version = "0.0.1"
+version = "0.0.2"
 authors = [
   { name="Diego T. Perez-Alvarez", email="diego.tomohisa@gmail.com" },
 ]
