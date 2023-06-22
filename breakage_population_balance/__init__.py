@@ -1,6 +1,6 @@
 from glob import glob
 from warnings import warn
-import os
+import os, inspect
 from importlib import util
 
 # =============================================================================
@@ -45,6 +45,51 @@ from scipy.integrate import odeint
 def check_ndarray(*args, **kwargs):
     if not isinstance(args[1], np.ndarray):
         raise ValueError(f"Argument '{args[1]}' is not of type numpy.ndarray.")
+
+# def apply_function(grid, func, return_2D=False):
+#     """
+#     This function should handle arbitrarily shaped grids:
+    
+#     # 1D
+#     grid = np.array([1, 2, 3])
+#     foo = lambda x: x**2
+#     bins = grid.shape[0]
+#     f_grid = np.zeros_like(grid)
+#     for i in range(bins):
+#         f_grid[i] = foo(grid[i])
+
+#     # 2D
+#     grid = np.array([[1, 2, 3], [2, 3, 4], [3, 4, 5]])
+#     foo = lambda x, y: x**2 - y
+#     bins = grid.shape[0] # bins will always the same between dimensions.
+#     f_grid = np.zeros_like(grid)
+#     for i in range(bins):
+#         for j in range(bins):
+#             f_grid[i, j] = foo(grid[i], grid[j])
+#     """
+
+#     shape = grid.shape
+
+#     bins  = shape[0]
+
+#     dims  = len(shape)
+
+#     empty_grid = np.zero_like(grid)
+
+#     # check the number of arguments == dims
+#     assert dims==len(inspect.getfullargspec(func).args)
+
+#     def apply_recursive(indices):
+#         for i in range(bins):
+#             empty_grid[i] = func(grid[i])
+#             # Recursively call the function for the next dimension
+#             apply_recursive(indices + [i])
+
+#     # Start the recursion
+#     apply_recursive([])
+
+#     return empty_grid
+
 
 # def correct_flat_ndarray(*args, **kwargs):
 #     """
@@ -190,9 +235,7 @@ class breakageModel():
 
     def __set_rate(self, rate):
         #Cannot support > 1D
-        assert self.dims < 2, "Cannot calculate rates with > 2 dims."
         if callable(rate):
-            assert self.dims < 2, "Cannot calc rates with > 2 dims."
-            return rate(self.x)
+            return rate(self._x)
         check_ndarray(rate)
         return rate

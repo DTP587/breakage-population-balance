@@ -3,6 +3,7 @@
 build
 my_venv
 __pycache__
+*.egg-info
 *.pyc
 *.c
 *.com
