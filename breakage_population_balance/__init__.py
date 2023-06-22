@@ -236,6 +236,6 @@ class breakageModel():
     def __set_rate(self, rate):
         #Cannot support > 1D
         if callable(rate):
-            return rate(self._x)
+            return rate(self.x)
         check_ndarray(rate)
         return rate
