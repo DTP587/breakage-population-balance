@@ -36,9 +36,10 @@ def apply_kernel(grid, kernel, normalise=False):
     out_kernel = kernel(*grid, *[g[:, np.newaxis] for g in grid])
 
     if normalise:
-    	norms = out_kernel.sum(axis=1)
-    	nonzero = norms != 0
-    	out_kernel[nonzero, :] /= norms[nonzero, np.newaxis]
+    	np.seterr(invalid='ignore')
+    	norms = np.linalg.norm(out_kernel, 1, axis=1, keepdims=True)
+    	out_kernel /= norms
+    	np.seterr(invalid='warn')
     
     return out_kernel.T.astype(np.float64)
 
@@ -59,8 +60,10 @@ if __name__ == "__main__":
 	# parent x_, child x
 	kernel1  = lambda x, x_: (x)**2 + (x_)**2
 
+	print("\nExecuting 1D tests:\n")
 	# print(apply_function(x, foo1))
-	print(apply_kernel(x, kernel1, normalise=True))
+	print(f"kernel 1D:\n{apply_kernel(x, kernel1, normalise=True)}")
+	
 
 
 	# 2D
@@ -79,9 +82,11 @@ if __name__ == "__main__":
 			[[4, 0.1], [4, 0.2], [4, 0.3]]
 		]
 	)
+
+	print("\nExecuting 2D tests:\n")
 	# print(apply_to_points(grid2, foo2))
 	# print(apply_function(xy, foo2))
-	print(apply_kernel(xy, kernel2, normalise=True))
+	print(f"kernel 2D:\n{apply_kernel(xy, kernel2, normalise=True)}")
 
 
 	# 3D
