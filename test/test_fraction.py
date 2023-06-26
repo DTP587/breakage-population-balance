@@ -14,10 +14,11 @@ k = lambda x: x**2
 # kernel function
 def Phi(x, y):
     if x < y:
-        pass
+        return x / y
     else:
-        return 0
-    return x / y
+        return 0.
+
+Phi = np.vectorize(Phi, otypes=[np.float64])
 
 # Works on a fraction based approach, so number needs to be converted to
 # fraction.
@@ -28,6 +29,12 @@ model = breakageModel(IC, t, x, k, kernel=Phi)
 solution = model.solve_fraction()
 
 # =============================================================================
+
+print(
+	f"Mass before:\t{np.sum(IC)}\n" +
+	f"------------\n" +
+	f"Mass after:\t{np.sum(solution[-1])}"
+)
 
 plot_against_analytical(solution, model, plot_as="fraction")
 # plot_against_analytical(solution/x, model, plot_as="number")

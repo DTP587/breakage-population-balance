@@ -1,7 +1,7 @@
 from glob import glob
 from warnings import warn
-import os, inspect
 from importlib import util
+import os
 
 # =============================================================================
 
@@ -41,90 +41,8 @@ from scipy.integrate import odeint
 
 # =============================================================================
 
-
-def check_ndarray(*args, **kwargs):
-    if not isinstance(args[1], np.ndarray):
-        raise ValueError(f"Argument '{args[1]}' is not of type numpy.ndarray.")
-
-# def apply_function(grid, func, return_2D=False):
-#     """
-#     This function should handle arbitrarily shaped grids:
-    
-#     # 1D
-#     grid = np.array([1, 2, 3])
-#     foo = lambda x: x**2
-#     bins = grid.shape[0]
-#     f_grid = np.zeros_like(grid)
-#     for i in range(bins):
-#         f_grid[i] = foo(grid[i])
-
-#     # 2D
-#     grid = np.array([[1, 2, 3], [2, 3, 4], [3, 4, 5]])
-#     foo = lambda x, y: x**2 - y
-#     bins = grid.shape[0] # bins will always the same between dimensions.
-#     f_grid = np.zeros_like(grid)
-#     for i in range(bins):
-#         for j in range(bins):
-#             f_grid[i, j] = foo(grid[i], grid[j])
-#     """
-
-#     shape = grid.shape
-
-#     bins  = shape[0]
-
-#     dims  = len(shape)
-
-#     empty_grid = np.zero_like(grid)
-
-#     # check the number of arguments == dims
-#     assert dims==len(inspect.getfullargspec(func).args)
-
-#     def apply_recursive(indices):
-#         for i in range(bins):
-#             empty_grid[i] = func(grid[i])
-#             # Recursively call the function for the next dimension
-#             apply_recursive(indices + [i])
-
-#     # Start the recursion
-#     apply_recursive([])
-
-#     return empty_grid
-
-
-# def correct_flat_ndarray(*args, **kwargs):
-#     """
-#     Flat numpy arrays are handled by this function.
-    
-#     ```
-#     array([1, 1, 1]) -> array([[1, 1, 1]])
-#     ```
-
-#     This way, the shape of the numpy array inputted is always standardised.
-#     """
-#     arg_length = np.len(args[1].shape)
-#     # Reshape input array to (dims, bins)
-#     if arg_length < 2:
-#         arg = args[1].reshape((1, args[1].shape[0]))
-#     else:
-#         arg = args[1]
-#     return arg
-
-
-def wrapper_check_ndarray(func):
-    def inner(*args, **kwargs):
-        check_ndarray(*args, **kwargs)
-        return func(*args, **kwargs)
-    return inner
-
-# def wrapper_correct_flat_ndarray(func):
-#     def inner(*args, **kwargs):
-#         args[1] = correct_flat_ndarray(*args, **kwargs)
-#         return func(*args, **kwargs)
-#     return inner
-
-# def calculate_phi(kernel, indices):
-
-
+from .array_manipulation import check_ndarray, wrapper_check_ndarray, \
+    apply_function, apply_kernel
 
 # =============================================================================
 
@@ -169,15 +87,7 @@ class breakageModel():
 
 # --------------------------------------------
 
-    # @wrapper_check_ndarray 
-    # # @wrapper_correct_flat_ndarray
-    # def __set_ICs(self, initial_condition):
-    #     self.dims = initial_condition[0]
-    #     self.bins = initial_condition[1]
-    #     return initial_condition
-
     @wrapper_check_ndarray 
-    # @wrapper_correct_flat_ndarray
     def __set_ICs(self, initial_condition):
         self.shape = initial_condition.shape
         self.bins  = self.shape[0]
@@ -195,7 +105,6 @@ class breakageModel():
         return times
 
     @wrapper_check_ndarray
-    # @wrapper_correct_flat_ndarray
     def __set_grid(self, grid):
         # Check shape is the same as initial_condition
         for i in range(self.dims):
@@ -204,38 +113,37 @@ class breakageModel():
      
     def __set_kernel(self, kernel):
         if callable(kernel):
-            assert self.dims < 2, "Cannot calc kernels with > 2 dims."
             # Calculate phi
-            Phi = np.zeros([self.bins, self.bins])
-            for i in range(self.bins):
-                for j in range(self.bins):
-                    Phi[i, j] = kernel(self.x[i], self.x[j])
-                # Normalise array to avoid mass gain/loss
-                row = Phi[i, :]
-                row_total = np.sum(row)
-                if row_total == 0:
-                     continue
-                for j in range(self.bins):
-                    Phi[i, j] /= row_total 
-            return Phi
-        check_ndarray(kernel)
+            # Phi = np.zeros([self.bins, self.bins])
+            # for i in range(self.bins):
+            #     for j in range(self.bins):
+            #         Phi[i, j] = kernel(self.x[i], self.x[j])
+            #     # Normalise array to avoid mass gain/loss
+            #     row = Phi[i, :]
+            #     row_total = np.sum(row)
+            #     if row_total == 0:
+            #          continue
+            #     for j in range(self.bins):
+            #         Phi[i, j] /= row_total 
+            # print(Phi)
+            return apply_kernel(self.x, kernel, normalise=True)
+        check_ndarray(self, kernel)
         return kernel
 
     def __set_beta(self, beta):
         if callable(beta):
-            assert self.dims < 2, "Cannot calc beta with > 2 dims."
             # Calculate phi
-            Beta = np.zeros([self.bins, self.bins])
-            for i in range(self.bins):
-                for j in range(self.bins):
-                    Beta[i, j] = beta(self.x[i], self.x[j])
-            return Beta
-        check_ndarray(Beta)
-        return Beta
+            # Beta = np.zeros([self.bins, self.bins])
+            # for i in range(self.bins):
+            #     for j in range(self.bins):
+            #         Beta[i, j] = beta(self.x[i], self.x[j])
+            # return Beta
+            return apply_kernel(self.x, beta)
+        check_ndarray(self, beta)
+        return beta
 
     def __set_rate(self, rate):
-        #Cannot support > 1D
         if callable(rate):
-            return rate(self.x)
-        check_ndarray(rate)
+            return apply_function(self.x, rate)
+        check_ndarray(self, rate)
         return rate
