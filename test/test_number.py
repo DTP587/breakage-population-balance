@@ -23,7 +23,7 @@ IC = np.exp(-x)
 
 # Run and solve the breakage problem
 model = breakageModel(IC, t, x, k, beta=Beta)
-solution = model.solve_number()
+solution = model.solve("cyn_simple_breakage")
 
 # =============================================================================
 

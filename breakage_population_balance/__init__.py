@@ -36,6 +36,11 @@ module_dirs = [
 
 breakageODE = import_cython(MODULE_NAME, module_dirs)
 
+VALID_METHODS = [ method for method in dir(breakageODE) \
+    if method not in [ 'DTYPE_FLOAT', 'DTYPE_INT', '__builtins__', '__doc__', \
+        '__file__', '__loader__', '__name__', '__package__', '__spec__', \
+        '__test__', 'np']]
+
 import numpy as np
 from scipy.integrate import odeint
 
@@ -62,27 +67,26 @@ class breakageModel():
             self._Beta = self.__set_beta(beta)
         elif beta is None:
             self._Phi  = self.__set_kernel(kernel)
-    
-    def solve_fraction(self):
-        assert self._Phi is not None, \
-            "kernel is undefined (did you mean solve_number?)."
-        # Solve the problem
-        return odeint(
-            breakageODE.simple_breakage_fraction, self._IC, self.t,
-            args=(
-                self.x, self._k, self._Phi
-            )
-        )
 
-    def solve_number(self):
-        assert self._Beta is not None, \
-            "beta is undefined (did you mean solve_fraction?)."
-        # Solve the problem
+    def solve(self, ODE):
+        try:
+            getattr(breakageODE, ODE)
+        except AttributeError:
+            raise AttributeError(f"'{ODE}' does not exsist as an ODE.\n\n" + \
+                f"Valid ODEs include: {VALID_METHODS}")
+
+        if "yf" in ODE:
+            assert self._Phi is not None, \
+                "kernel is undefined (did you mean *yn?)."
+            args=(self.x, self._k, self._Phi)
+        elif "yn" in ODE:
+            assert self._Beta is not None, \
+                "beta is undefined (did you mean *yf?)."
+            args=(self.x, self._k, self._Beta)
+
         return odeint(
-            breakageODE.simple_breakage_number, self._IC, self.t,
-            args=(
-                self.x, self._k, self._Beta
-            )
+            eval(f"breakageODE.{ODE}"), self._IC, self.t,
+            args=args
         )
 
 # --------------------------------------------
@@ -106,38 +110,17 @@ class breakageModel():
 
     @wrapper_check_ndarray
     def __set_grid(self, grid):
-        # Check shape is the same as initial_condition
-        for i in range(self.dims):
-            assert grid.shape[i] == self.bins
+        assert grid.shape == self.shape
         return grid
      
     def __set_kernel(self, kernel):
         if callable(kernel):
-            # Calculate phi
-            # Phi = np.zeros([self.bins, self.bins])
-            # for i in range(self.bins):
-            #     for j in range(self.bins):
-            #         Phi[i, j] = kernel(self.x[i], self.x[j])
-            #     # Normalise array to avoid mass gain/loss
-            #     row = Phi[i, :]
-            #     row_total = np.sum(row)
-            #     if row_total == 0:
-            #          continue
-            #     for j in range(self.bins):
-            #         Phi[i, j] /= row_total 
-            # print(Phi)
             return apply_kernel(self.x, kernel, normalise=True)
         check_ndarray(self, kernel)
         return kernel
 
     def __set_beta(self, beta):
         if callable(beta):
-            # Calculate phi
-            # Beta = np.zeros([self.bins, self.bins])
-            # for i in range(self.bins):
-            #     for j in range(self.bins):
-            #         Beta[i, j] = beta(self.x[i], self.x[j])
-            # return Beta
             return apply_kernel(self.x, beta)
         check_ndarray(self, beta)
         return beta

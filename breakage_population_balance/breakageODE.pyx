@@ -15,10 +15,28 @@ DTYPE_FLOAT = np.float64
 ctypedef np.int64_t DTYPE_INT_t
 ctypedef np.float64_t DTYPE_FLOAT_t
 
-# For use with scipy's ODEINT, fraction based.
+# =========================================================================== #
+# For use with scipy's ODEINT
+
+# --------------------------------------------------------------------------- #
+# Fraction based.
+
+def pyf_simple_breakage(F, t, x, k, phi):
+    dFdt = np.zeros_like(F)
+    # Death breakup term
+    dFdt -= F * k
+    # Birth breakup term
+    dFdt += np.nansum(
+        phi * np.triu(
+            np.tile(k*F, (phi.shape[-1], 1))
+        ),
+        axis=1
+    )
+    return dFdt
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def simple_breakage_fraction(
+def cyf_simple_breakage(
     np.ndarray[DTYPE_FLOAT_t, ndim=1] F,
     DTYPE_FLOAT_t t,
     np.ndarray[DTYPE_FLOAT_t, ndim=1] x,
@@ -41,10 +59,12 @@ def simple_breakage_fraction(
 
     return f
 
-# For use with scipy's ODEINT, number based.
+# --------------------------------------------------------------------------- #
+# Number based.
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def simple_breakage_number(
+def cyn_simple_breakage(
     np.ndarray[DTYPE_FLOAT_t, ndim=1] N, 
     DTYPE_FLOAT_t t,
     np.ndarray[DTYPE_FLOAT_t, ndim=1] x,

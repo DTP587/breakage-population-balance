@@ -41,7 +41,7 @@ def apply_kernel(grid, kernel, normalise=False):
     	out_kernel /= norms
     	np.seterr(invalid='warn')
     
-    return out_kernel.T.astype(np.float64)
+    return out_kernel.T.astype(np.float64) 
 
 # =========================================================================== #
 # testing

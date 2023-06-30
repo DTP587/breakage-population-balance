@@ -6,8 +6,8 @@ classes = 100
 nt = 100
 Tf = 5
 
-x = np.logspace(-2, 1, classes)
-t = np.linspace(0, Tf, nt+1)
+x = np.logspace(-2, 1, classes, dtype=np.float64)
+t = np.linspace(0, Tf, nt+1, dtype=np.float64)
 
 k = lambda x: x**2
 
@@ -17,16 +17,13 @@ def Phi(x, y):
         return x / y
     else:
         return 0.
-
 Phi = np.vectorize(Phi, otypes=[np.float64])
 
-# Works on a fraction based approach, so number needs to be converted to
-# fraction.
 IC = np.exp(-x)*x
 
 # Run and solve the breakage problem
 model = breakageModel(IC, t, x, k, kernel=Phi)
-solution = model.solve_fraction()
+solution = model.solve("cyf_simple_breakage")
 
 # =============================================================================
 

@@ -1,14 +1,105 @@
 from matplotlib import pyplot as plt
 import numpy as np
 
+plt.style.use('seaborn-whitegrid')
+
+def plot_together(solutions, models, n_plots=5, plot_as="fraction"):
+
+	fig, axs = plt.subplot_mosaic(
+		[ ['a)'],
+		  ['b)'] ],
+		sharex = True
+	)
+
+	iterables = zip(solutions, models, ['a)', 'b)'])
+
+	for sol, mod, ax in iterables:
+		x = mod.x
+		t = mod.t
+		nt = mod.t.shape[0]
+
+		# Same indexes, different spaces.
+		times = [0, *np.round(np.logspace(0, np.log10(nt-1), n_plots, dtype=int))]
+
+		y_max = 0
+
+		for time in times:
+			linestyle = ':' if time == 0 else '-'
+
+			y = sol[time]/np.sum(sol[time])
+
+			axs[ax].plot(x, y, linestyle=linestyle, label=f"{round(mod.t[time],2)} s")
+		
+			y_max = np.max(y) if np.max(y) > y_max else y_max
+
+			pad = float('%.2g'%(y_max*0.05))
+			axs[ax].set_ylim([-pad, float('%.2g'%y_max)+pad])
+			axs[ax].set_ylabel(f"Normalised {plot_as}", weight="bold")
+
+		axs[ax].set_xscale("log")
+		axs[ax].set_xlim([np.min(x), np.max(x)])
+
+		axs[ax].legend(
+			loc="upper left", frameon=True, framealpha=0.8, facecolor="white",
+			title=r"$\bf{Sample}$"
+		)
+
+	plt.tight_layout()
+	plt.show()
+
+
+
+def plot_simple(solution, model, n_plots=5, plot_as="fraction"):
+	nt = model.t.shape[0]
+	Tf = model.t[-1]
+	x  = model.x
+
+	ax = plt.subplot(111)
+
+	times = [0, *np.round(np.logspace(0, np.log10(nt-1), n_plots, dtype=int))]
+	MOC_solution = []
+
+	for time in times:
+		if plot_as == "number":
+			MOC_solution.append(solution[time])
+		elif plot_as == "fraction":
+			MOC_solution.append(solution[time])
+		else:
+			raise ValueError(f"Unrecognised plot_as: {plot_as}")
+
+	iterables = zip(
+		MOC_solution,
+		times
+	)
+
+	y_max = 0
+
+	for y, t in iterables:
+		linestyle = ':' if t == 0 else '-'
+
+		ax.plot(x, y/np.sum(y), linestyle=linestyle, label=f"{round(model.t[t],2)} s")
+		
+		y_max = np.max(y/np.sum(y)) if np.max(y/np.sum(y)) > y_max else y_max
+
+	ax.set_xscale("log")
+	ax.set_xlim([np.min(x), np.max(x)])
+
+	pad = float('%.2g'%(y_max*0.05))
+	ax.set_ylim([-pad, float('%.2g'%y_max)+pad])
+	ax.set_ylabel(f"Normalised {plot_as}", weight="bold")
+
+	plt.legend(
+		loc="upper left", frameon=True, framealpha=0.8, facecolor="white",
+		title=r"$\bf{Sample}$"
+	)
+	plt.tight_layout()
+	plt.show()
+
 
 def plot_against_analytical(solution, model, n_plots=5, plot_as="number"):
 	nt = model.t.shape[0]
 	Tf = model.t[-1]
-	x  = model.x	
-
-	# Plot the solution against expected analytical value
-	plt.style.use('seaborn-whitegrid')
+	x  = model.x
 
 	fig, axs = plt.subplot_mosaic(
 		[ ['a)', 'b)'],
