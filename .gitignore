@@ -1,8 +1,5 @@
 # Compiled source #
 ###################
-build
-my_venv
-__pycache__
 *.egg-info
 *.pyc
 *.c
@@ -41,3 +38,10 @@ __pycache__
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# My added extras #
+###################
+build
+my_venv
+__pycache__
+_secret*

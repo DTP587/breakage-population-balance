@@ -14,7 +14,7 @@ def plot_together(solutions, models, n_plots=5, plot_as="fraction"):
 	iterables = zip(solutions, models, ['a)', 'b)'])
 
 	for sol, mod, ax in iterables:
-		x = mod.x
+		x, = mod.x
 		t = mod.t
 		nt = mod.t.shape[0]
 
@@ -52,7 +52,7 @@ def plot_together(solutions, models, n_plots=5, plot_as="fraction"):
 def plot_simple(solution, model, n_plots=5, plot_as="fraction"):
 	nt = model.t.shape[0]
 	Tf = model.t[-1]
-	x  = model.x
+	x,  = model.x
 
 	ax = plt.subplot(111)
 
@@ -99,7 +99,7 @@ def plot_simple(solution, model, n_plots=5, plot_as="fraction"):
 def plot_against_analytical(solution, model, n_plots=5, plot_as="number"):
 	nt = model.t.shape[0]
 	Tf = model.t[-1]
-	x  = model.x
+	x,  = model.x
 
 	fig, axs = plt.subplot_mosaic(
 		[ ['a)', 'b)'],

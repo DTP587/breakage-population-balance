@@ -21,18 +21,42 @@ ctypedef np.float64_t DTYPE_FLOAT_t
 # --------------------------------------------------------------------------- #
 # Fraction based.
 
-def pyf_simple_breakage(F, t, x, k, phi):
+def pyf_simple_breakage(F, t, x, k, phi, axis=1):
     dFdt = np.zeros_like(F)
     # Death breakup term
     dFdt -= F * k
     # Birth breakup term
     dFdt += np.nansum(
-        phi * np.triu(
-            np.tile(k*F, (phi.shape[-1], 1))
-        ),
-        axis=1
+        phi * k * F,
+        axis=axis
     )
     return dFdt
+
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
+# def cyf_2D_breakage(
+#     np.ndarray[DTYPE_FLOAT_t, ndim=2] F,
+#     DTYPE_FLOAT_t t,
+#     np.ndarray[DTYPE_FLOAT_t, ndim=1] x,
+#     np.ndarray[DTYPE_FLOAT_t, ndim=1] y,
+#     np.ndarray[DTYPE_FLOAT_t, ndim=1] rate,
+#     np.ndarray[DTYPE_FLOAT_t, ndim=2] kernel
+# ):
+    
+#     cdef int bins = F.shape[0]
+
+#     cdef int i
+#     cdef int j
+
+#     cdef np.ndarray[DTYPE_FLOAT_t, ndim=1] f = np.zeros(bins)
+
+#     f -= rate * F
+
+#     for i in np.arange(bins):
+#         for j in np.arange(i+1, bins):
+#             f[i] += rate[j] * kernel[i, j] * F[j]
+
+#     return f
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
