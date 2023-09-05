@@ -17,17 +17,24 @@ class breakageModel():
         self.x   = self.__set_grid(grid)
         self._k   = self.__set_rate(rate)
 
-        assert kernel != beta, "kernel and beta cannot be the same or None."
+        assert kernel is not beta,"kernel and beta cannot be the same or None."
 
         if kernel is None:
             self._Beta = self.__set_beta(beta)
+            self._Phi  = None
         elif beta is None:
             self._Phi  = self.__set_kernel(kernel)
+            self._Beta = None
 
 # --------------------------------------------
 
-    def solve(self, ODE):
-        solved = solver(ODE, self)
+    def solve(self, ODE, method=None):
+        if not method:
+            if self.dims == 1:
+                method = "odeint"
+            elif self.dims == 2:
+                method = "euler"
+        solved = solver(ODE, self, method)
         return solved.solution
 
 # --------------------------------------------

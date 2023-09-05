@@ -1,5 +1,5 @@
 from breakage_population_balance import breakageModel
-from test import plot_simple, plot_together
+from plotting import plot_simple, plot_together
 import numpy as np
 
 classes = 100

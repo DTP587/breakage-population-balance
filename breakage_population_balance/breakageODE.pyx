@@ -15,9 +15,6 @@ DTYPE_FLOAT = np.float64
 ctypedef np.int64_t DTYPE_INT_t
 ctypedef np.float64_t DTYPE_FLOAT_t
 
-# =========================================================================== #
-# For use with scipy's ODEINT
-
 # --------------------------------------------------------------------------- #
 # Fraction based.
 
@@ -32,31 +29,66 @@ def pyf_simple_breakage(F, t, x, k, phi, axis=1):
     )
     return dFdt
 
-# @cython.boundscheck(False)
-# @cython.wraparound(False)
-# def cyf_2D_breakage(
-#     np.ndarray[DTYPE_FLOAT_t, ndim=2] F,
-#     DTYPE_FLOAT_t t,
-#     np.ndarray[DTYPE_FLOAT_t, ndim=1] x,
-#     np.ndarray[DTYPE_FLOAT_t, ndim=1] y,
-#     np.ndarray[DTYPE_FLOAT_t, ndim=1] rate,
-#     np.ndarray[DTYPE_FLOAT_t, ndim=2] kernel
-# ):
-    
-#     cdef int bins = F.shape[0]
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def cyf_2D_breakage(
+    np.ndarray[DTYPE_FLOAT_t, ndim=2] F,
+    DTYPE_FLOAT_t t,
+    np.ndarray[DTYPE_FLOAT_t, ndim=1] x,
+    np.ndarray[DTYPE_FLOAT_t, ndim=1] y,
+    np.ndarray[DTYPE_FLOAT_t, ndim=2] rate,
+    np.ndarray[DTYPE_FLOAT_t, ndim=4] kernel
+):
 
-#     cdef int i
-#     cdef int j
+    cdef int bins_i = F.shape[0]
+    cdef int bins_j = F.shape[1]
 
-#     cdef np.ndarray[DTYPE_FLOAT_t, ndim=1] f = np.zeros(bins)
+    cdef int i # x
+    cdef int j # y
+    cdef int k # x'
+    cdef int l # y'
 
-#     f -= rate * F
+    cdef np.ndarray[DTYPE_FLOAT_t, ndim=2] f = np.zeros_like(F)
 
-#     for i in np.arange(bins):
-#         for j in np.arange(i+1, bins):
-#             f[i] += rate[j] * kernel[i, j] * F[j]
+    f -= rate * F
 
-#     return f
+    for i in np.arange(bins_i):
+        for j in np.arange(bins_j):
+            for k in np.arange(i+1, bins_i):
+                for l in np.arange(j+1, bins_j):
+
+                    f[i, j] += rate[k, l] * kernel[i, j, k, l] * F[k, l]
+
+    return f
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def Euler_2D(
+    np.ndarray[DTYPE_FLOAT_t, ndim=2] F,
+    np.ndarray[DTYPE_FLOAT_t, ndim=1] t,
+    np.ndarray[DTYPE_FLOAT_t, ndim=1] x,
+    np.ndarray[DTYPE_FLOAT_t, ndim=1] y,
+    np.ndarray[DTYPE_FLOAT_t, ndim=2] rate,
+    np.ndarray[DTYPE_FLOAT_t, ndim=4] kernel,
+    str ode
+):
+    cdef int bins_t = t.shape[0]
+    cdef int ti
+    cdef DTYPE_FLOAT_t dt = np.ediff1d(t)[0]
+
+    cdef np.ndarray[DTYPE_FLOAT_t, ndim=3] sol = np.zeros((bins_t, F.shape[0], F.shape[1]))
+
+    if ode == "cyf_2D_breakage":
+        function = cyf_2D_breakage
+    else:
+        raise ValueError("Unrecognised ode")
+
+    sol[0] = F.copy()
+
+    for ti in range(1, bins_t):
+        sol[ti] = sol[ti-1] + dt*function(sol[ti-1], dt*ti, x, y, rate, kernel)
+
+    return sol
 
 @cython.boundscheck(False)
 @cython.wraparound(False)

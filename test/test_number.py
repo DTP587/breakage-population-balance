@@ -1,5 +1,5 @@
 from breakage_population_balance import breakageModel
-from test import plot_against_analytical
+from plotting import plot_against_analytical
 import numpy as np
 
 classes = 100

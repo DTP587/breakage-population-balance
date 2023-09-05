@@ -49,16 +49,19 @@ def plot_together(solutions, models, n_plots=5, plot_as="fraction"):
 
 
 
-def plot_simple(solution, model, n_plots=5, plot_as="fraction"):
+def plot_simple(solution, model, n_plots=5, plot_as="fraction", spacing="log"):
 	nt = model.t.shape[0]
 	Tf = model.t[-1]
 	x,  = model.x
 
 	ax = plt.subplot(111)
 
-	times = [0, *np.round(np.logspace(0, np.log10(nt-1), n_plots, dtype=int))]
-	MOC_solution = []
+	if spacing == "log":
+		times = [ 0, *np.logspace(0, np.log10(nt-1), n_plots, dtype=int)]
+	elif spacing == "lin":
+		times = [ *np.linspace(0, nt-1, n_plots, dtype=int)]
 
+	MOC_solution = []
 	for time in times:
 		if plot_as == "number":
 			MOC_solution.append(solution[time])

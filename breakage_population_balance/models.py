@@ -1,73 +1,71 @@
 from scipy.integrate import odeint
 import numpy as np
 
-from .cythonImports import VALID_METHODS, breakageODE
+from .cythonImports import VALID_ODES, breakageODE
 
 # =============================================================================
 
 class solver():
     def __init__(
-        self, name, breakageModel
+        self, name, breakageModel, method
     ):
         self.name = name
+        self.method = method
+        self.model = breakageModel
 
         try:
             getattr(breakageODE, name)
         except AttributeError:
-            raise AttributeError(f"'{name}' does not exsist as a method.\n\n" \
-                + f"Valid methods include: {VALID_METHODS}")
+            raise AttributeError(f"'{name}' does not exsist as a ODE.\n\n" \
+                + f"Valid ODEs include: {VALID_ODES}")
 
-        solver_name = eval(r"self." + self.name)
+        self.ode = eval(r"breakageODE." + self.name)
 
-        self.solution = solver_name(breakageModel)
+        if method == "odeint":
+            self.solution = self.odeint_dispatcher()
+        elif method == "euler":
+            self.solution = self.euler_dispatcher()
 
 # --------------------------------------------
 # 1D solvers
+    
+    def odeint_dispatcher(self):
+        model = self.model
 
-    def pyf_simple_breakage(self, breakageModel):
-        return odeint(
-            breakageODE.pyf_simple_breakage,
-            breakageModel._IC,
-            breakageModel.t,
-            args=(
-                *breakageModel.x,
-                breakageModel._k,
-                breakageModel._Phi
-            )
-        )
+        if model.dims > 1:
+            raise ValueError("odeint only works for 1D ODEs")
 
-    def cyf_simple_breakage(self, breakageModel):
-        return odeint(
-            breakageODE.cyf_simple_breakage,
-            breakageModel._IC,
-            breakageModel.t,
-            args=(
-                *breakageModel.x,
-                breakageModel._k,
-                breakageModel._Phi
-            )
-        )
+        if model._Beta is not None:
+            args = ( *model.x, model._k, model._Beta )
+        elif model._Phi is not None:
+            args = ( *model.x, model._k, model._Phi )
+        else:
+            raise ValueError("Phi and Beta unrecognised")
 
-    def cyf_2D_breakage(self, breakageModel):
-        return breakageODE.cyf_2D_breakage(
-            breakageModel._IC,
-            breakageModel.t,
-            breakageModel.x[0],
-            breakageModel.x[1],
-            breakageModel._k,
-            breakageModel._Phi
-        )
-
-    def cyn_simple_breakage(self, breakageModel):
-        return odeint(
-            breakageODE.cyn_simple_breakage,
-            breakageModel._IC,
-            breakageModel.t,
-            args=(
-                *breakageModel.x,
-                breakageModel._k,
-                breakageModel._Beta
-            )
-        )
+        return odeint( self.ode, model._IC, model.t, args=args )
 
 # --------------------------------------------
+# 2D solvers
+
+    def euler_dispatcher(self):
+        model = self.model
+
+        if model.dims != 2:
+            raise ValueError("Only supports 2D")
+
+        if model._Beta is not None:
+            arg = model._Beta
+        elif model._Phi is not None:
+            arg = model._Phi
+        else:
+            raise ValueError("Phi and Beta unrecognised")
+
+        return breakageODE.Euler_2D(
+            model._IC,
+            model.t,
+            model.x[0],
+            model.x[1],
+            model._k,
+            arg,
+            self.name
+        )

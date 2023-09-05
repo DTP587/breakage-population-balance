@@ -1,5 +1,11 @@
 import numpy as np
 import os, inspect
+# from .cythonImports import arrayCythFuncs # this works
+from .cythonImports import arrayCythFuncs
+
+fractional_percentage = arrayCythFuncs.fractional_percentage
+fractional_percentage_array = arrayCythFuncs.fractional_percentage_array
+normalise_to_x = arrayCythFuncs.normalise_to_x
 
 # =========================================================================== #
 # Checking arrays
@@ -33,7 +39,10 @@ def apply_kernel(grid, kernel, normalise=False):
 		tuple([ i - pos for i in range(2*NUM_DIMS - 1) ]) \
 			for pos in range(2*NUM_DIMS)
 	]
-	print(EXT_DIMS)
+	# print(EXT_DIMS)
+	# for i in [ np.expand_dims(x, axis=axis) \
+	# 	for x, axis in zip(2*grid, EXT_DIMS) ]:
+	# 	print(i)
 
 	out_kernel = kernel( *[ np.expand_dims(x, axis=axis) \
 		for x, axis in zip(2*grid, EXT_DIMS) ] )
@@ -42,6 +51,7 @@ def apply_kernel(grid, kernel, normalise=False):
 		np.seterr(invalid='ignore')
 		norms = np.linalg.norm(out_kernel, 1, axis=1, keepdims=True)
 		out_kernel /= norms
+		out_kernel = np.nan_to_num(out_kernel)
 		np.seterr(invalid='warn')
 
 	return out_kernel.T.astype(np.float64)

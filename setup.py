@@ -6,7 +6,10 @@ import numpy as np
 
 setup(
     packages=['breakage_population_balance'],
-    ext_modules=cythonize("breakage_population_balance/breakageODE.pyx"),
+    ext_modules=cythonize([
+        "breakage_population_balance/breakageODE.pyx",
+        "breakage_population_balance/arrayCythFuncs.pyx"
+    ]),
     include_dirs=[np.get_include()],
     zip_safe=False
 )
