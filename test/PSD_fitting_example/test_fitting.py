@@ -83,9 +83,6 @@ def error_calculator(output, PSM=None):
 
 	return np.array(err_sum)
 
-def error_routine(array, PSM=PSMs["11500"]):
-	return error_calculator(run_simulation(array), PSM=PSM)
-
 def calc_fracs(solution):
 	pred = { frac: np.zeros_like(t, dtype=np.float64) for frac in FRACS }
 
@@ -97,7 +94,7 @@ def calc_fracs(solution):
 
 	return pred
 
-def plot_psds_with_sliders(array, y_fracs):
+def plot_psds_with_sliders(speed, array, y_fracs):
 	b=array[0]
 	e=array[1]
 	a=array[2]
@@ -121,7 +118,7 @@ def plot_psds_with_sliders(array, y_fracs):
 
 	y_pred = calc_fracs(solution)
 
-	plt.title(f"{args[1]}")
+	plt.title(f"{speed}")
 	plt.scatter(
 		y_fracs["0.5"][:, 0], y_fracs["0.5"][:, 1],
 		facecolor="None", edgecolor="#335C81"
@@ -168,13 +165,11 @@ def plot_psds_with_sliders(array, y_fracs):
 	plt.tight_layout()
 	plt.show(block=True)
 
-
-if __name__ == "__main__":
+def process_args(args):
 	error = ValueError(
 		f"Script requires a SINGLE CL argument to run directly.\n" + \
 		f"Available arguments are:\n{PSMs.keys()}"
 	)
-	args = sys.argv
 
 	if len(args) == 1:
 		raise error
@@ -183,11 +178,14 @@ if __name__ == "__main__":
 	elif args[1] not in PSMs.keys():
 		raise error
 
+	return args
+
+def extract_frac_psm(key):
 	y_fracs = {}
 	for frac in FRACS:
 		y_fracs[frac] = []
-		for col in PSM:
-			data = PSM[col].values
+		for col in PSMs[key]:
+			data = PSMs[key][col].values
 			data = data/np.sum(data)
 			seconds = int(col.split(".", 1)[0])
 			y_fracs[frac].append((
@@ -208,9 +206,16 @@ if __name__ == "__main__":
 				data
 			))
 
-	PSM = y_psms[args[1]]
+	return y_psms[key], y_fracs
 
-	error_routine.__defaults__ = (PSM,)
+
+if __name__ == "__main__":
+	speed = process_args(sys.argv)[1]
+
+	PSM, y_fracs = extract_frac_psm(speed)
+
+	def error_routine(array):
+		return error_calculator(run_simulation(array), PSM=PSM)
 
 	res = minimise(
 		error_routine, x0=np.array([B_DEFAULT, E_DEFAULT, A_DEFAULT]),
@@ -221,6 +226,6 @@ if __name__ == "__main__":
 
 	solution = run_simulation(res.x)
 
-	plot_psds_with_sliders(res.x, y_fracs)
+	plot_psds_with_sliders(speed, res.x, y_fracs)
 
 
