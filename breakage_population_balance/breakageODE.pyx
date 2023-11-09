@@ -56,7 +56,6 @@ def cyf_2D_breakage(
         for j in np.arange(bins_j):
             for k in np.arange(i+1, bins_i):
                 for l in np.arange(j+1, bins_j):
-
                     f[i, j] += rate[k, l] * kernel[i, j, k, l] * F[k, l]
 
     return f

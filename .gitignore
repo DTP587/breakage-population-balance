@@ -45,3 +45,5 @@ build
 my_venv
 __pycache__
 _secret*
+test/PSD_fitting_example/Extract_NMR.png
+test/PSD_fitting_example/Extract_NMR.py
