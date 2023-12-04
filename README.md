@@ -13,7 +13,7 @@ _Comparison between analytical [(Ziff and McGrady, 1985)](https://www.doi.org/10
 
 The rate and kernel can be passed as callable functions or as numpy arrays. all other fields are passed as numpy arrays. Currently there is only one breakage model, which is simple breakage. I'd like to extend this function to cover an arbitrary number of inputted dimensions (internal and external) before moving on to extending the number of models.
 
-```
+```python3
 from breakage_population_balance import breakageModel
 import numpy as np
 
