@@ -163,16 +163,18 @@ def plot_against_analytical(solution, model, n_plots=5, plot_as="number"):
 		pad = float('%.2g'%(max_val*0.05))
 		if ax == 'c)':
 			axs[ax].set_ylim([-float('%.2g'%max_val)-pad, float('%.2g'%max_val)+pad])
+			axs[ax].set_xlabel("Size [m]", weight="bold")
 		else:
 			axs[ax].set_ylim([-pad, float('%.2g'%max_val)+pad])
 
 	for ax, label in zip(['a)', 'c)'], [f"Normalised {plot_as}", '%']):
 		axs[ax].set_ylabel(label, weight="bold")
-
-	fig.suptitle(
-		"Analytical (Ziff and McGrady) vs Numerical (Method of Classes)",
-		weight='bold'
-	)
+	
+	axs['c)'].set_ylim(bottom=-5, top=5)
+	# fig.suptitle(
+	# 	"Analytical (Ziff and McGrady) vs Numerical (Method of Classes)",
+	# 	weight='bold'
+	# )
 	plt.tight_layout()
 	plt.show()
 

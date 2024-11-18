@@ -10,12 +10,13 @@ from breakage_population_balance.arrayManipulation import \
 
 from Extract_UVvis import SpeedSweep
 from test_fitting import \
-	PSMs, error_calculator, process_args, extract_frac_psm, run_simulation, x, t,\
-	B_DEFAULT, E_DEFAULT, A_DEFAULT, calc_fracs
+	PSMs, error_calculator, process_args, extract_frac_psm, run_simulation, \
+	x, t, B_DEFAULT, E_DEFAULT, A_DEFAULT, calc_fracs
 # =========================================================================== #
 
 MAX_SIZE = 1600e-9  # We know that they are on average 200 nm.
                     # Changed from 1040 to 1600 nm when psds were fitted.
+                    # Minimum size fraction is 10e-9 so some material ignored
 
 def interp(solution, section_value: float):
     interpolated = None
@@ -31,16 +32,22 @@ def interp(solution, section_value: float):
     return interpolated, fraction
 
 
-def plot_UVvis_with_PSDs(speed, array, y_fracs):
+def plot_UVvis_with_PSDs(speed, array, y_fracs, PSM):
 	b=array[0]
 	e=array[1]
 	a=array[2]
 	s=1.6
 
+	if speed=="1500":
+		print("Plotting 3800 instead... ")
+		speed="3800"
+
 	SLIDER_MAX = 10
 
 	solution = run_simulation(array)
 	y_pred = calc_fracs(solution)
+
+	# print(y_pred)
 
 	interpolated = interp(solution, s*1e-6)[0]
 
@@ -93,6 +100,8 @@ def plot_UVvis_with_PSDs(speed, array, y_fracs):
 	for ax in ["UV", "PSD"]:
 		axd[ax].autoscale(False)
 
+	axd['UV'].set_ylim([1e-6, 1])
+
 	sliders = len(slider_params)*[None]
 	for i, (param, valinit, valstep) in enumerate(slider_params):
 		sliders[i] = Slider(
@@ -113,6 +122,11 @@ def plot_UVvis_with_PSDs(speed, array, y_fracs):
 
 		interpolated = interp(solution, sliders[-1].val*1e-6)[0]
 		line2.set_ydata(interpolated)
+		print(
+			np.array([slider.val for slider in sliders[:-1]]),
+			error_calculator(solution, PSM=PSM, speed=speed, size=MAX_SIZE)
+		)
+		axd['UV'].set_ylim([1e-6, 1])
 
 		fig.canvas.draw_idle()
 
@@ -128,15 +142,22 @@ if __name__ == "__main__":
 	PSM, y_fracs = extract_frac_psm(speed)
 	
 	def error_routine(array):
-		return error_calculator(run_simulation(array), PSM=PSM)
+		return error_calculator(run_simulation(array), PSM=PSM, speed=None)#speed)
 
 	res = minimise(
-		error_routine, x0=np.array([B_DEFAULT, E_DEFAULT, A_DEFAULT]),
-		bounds = ((0, 10), (0, None), (0, None)),
-		options={'tol': 1e-3, 'disp': True}
+		error_routine, x0=np.array([B_DEFAULT, E_DEFAULT, A_DEFAULT]), #np.array([5, 5, 5]),
+		bounds = ((1, None), (1, None), (1, None)),
+		options={'disp': True, 'maxiter': 10},
+		method='L-BFGS-B',
+		tol=1e-3
 	)
+	# res = minimise(
+	# 	error_routine, x0=np.array([B_DEFAULT, E_DEFAULT, A_DEFAULT]),
+	# 	bounds = ((1.5, 10), (0, 10), (0, 10)),
+	# 	options={'tol': 1e-3, 'disp': True}
+	# )
 	print(res.x)
 
 	plot_UVvis_with_PSDs(
-		speed, res.x, y_fracs
+		speed, res.x, y_fracs, PSM
 	)

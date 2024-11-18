@@ -34,12 +34,13 @@ def Phi(x, y):
     else:
         return 0
     return x / y
+Phi = np.vectorize(Phi, otypes=[np.float64])
 
 # Works on a fraction based approach, so number needs to be converted to
 # fraction.
 IC = np.exp(-x)*x
 
 # Run and solve the breakage problem
-model = breakageModel(IC, t, x, Phi, k)
-solution = model.solve()
+model = breakageModel(IC, t, x, k, Phi)
+solution = model.solve('pyf_simple_breakage')
 ```

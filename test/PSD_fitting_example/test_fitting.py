@@ -8,6 +8,8 @@ from breakage_population_balance import breakageModel
 from breakage_population_balance.arrayManipulation import \
 	fractional_percentage, fractional_percentage_array
 
+from Extract_UVvis import SpeedSweep
+
 dirname = os.path.dirname(__file__)
 
 FILENAMES = (
@@ -47,7 +49,20 @@ for filename in FILENAMES:
 		zero = zero/np.sum(zero)
 		x = PSM.index.to_numpy()*1e-6
 
-def run_simulation(array):
+def interp(solution, section_value: float):
+    interpolated = None
+
+    ix = np.where(x < section_value)[0][-1]
+
+    fraction = (section_value - x[ix]) / (x[ix+1] - x[ix])
+    lower  = np.sum(solution[1:, 0:(ix+1)], axis=1)
+    difference = np.sum(solution[1:, 0:(ix+2)], axis=1) - lower
+
+    interpolated = lower + difference*fraction
+
+    return interpolated, fraction
+
+def run_simulation(array, t=t):
 	b=array[0]
 	e=array[1]
 	a=array[2]
@@ -71,26 +86,49 @@ def run_simulation(array):
 
 	return solution
 
-def error_calculator(output, PSM=None):
+def error_calculator(output, PSM=None, speed=None, size=1.6e-6):
 	solution = output
 
 	err_sum = 0
 
 	for time, psd in PSM:
 		sol = solution[time_to_step(time)]
-		err = np.sum(np.abs(psd-sol))
+		index_0 = np.where(psd != 0)
+		err = np.sum(np.abs(psd[index_0]-sol[index_0])) # /((x[index_0]/x[-1])**3)
 		err_sum += err
+
+	if speed:
+		f = interp(solution, size)[0]
+
+		if speed =="1500":
+			if f[-1] > 2e-4:
+				err_sum += 10
+			return np.array(err_sum)
+
+		nts = np.round((SpeedSweep[speed][:, 0]*NT)/TF).astype(int)
+		yields = SpeedSweep[speed][:, 3]/SpeedSweep[speed][:, 2]
+
+		err_sum += 20*np.sum(np.abs((yields - f[nts-1])/yields))/nts.shape[0] # 0.1 3800, 20 everything else
 
 	return np.array(err_sum)
 
-def calc_fracs(solution):
-	pred = { frac: np.zeros_like(t, dtype=np.float64) for frac in FRACS }
+def calc_fracs(solution, array=True):
+	pred = {
+		frac: np.zeros_like(solution[:, 0], dtype=np.float64) for frac in FRACS
+	}
+
+	# print(pred)
 
 	for frac in FRACS:
-		for i in np.arange(NT+1):
-			pred[frac][i] = fractional_percentage(
-				solution[i], x, float(frac)
-			)
+		for i in np.arange(solution[:, 0].shape[0]):
+			if array:
+				pred[frac][i] = fractional_percentage(
+					solution[i], x, float(frac)
+				)
+			else:
+				pred[frac] = fractional_percentage(
+					solution[i], x, float(frac)
+				)
 
 	return pred
 

@@ -37,6 +37,17 @@ def fractional_percentage_array(
     np.ndarray[DTYPE_FLOAT_t, ndim=1] x,
     DTYPE_FLOAT_t frac
 ):
+    """
+    Applies fractional_percentage to a 2D array.
+
+    f <np.ndarray, ndim=2> -> the solution array
+    x <np.ndarray, ndim=1> -> the bins array
+    frac <float> -> the fraction to calculate
+
+    RETURNS:
+    f_out <np.ndarray, ndim=2> -> the interpolated fraction bin corresponding
+    to said frac argument.
+    """
     cdef int times = f.shape[0]
     cdef int bins  = f.shape[1]
     cdef np.ndarray[DTYPE_FLOAT_t, ndim=2] f_out  = f.copy()
